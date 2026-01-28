@@ -1,0 +1,15 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Izinkan akses langsung ke folder assets, css, js, images
+    RewriteCond %{REQUEST_URI} ^/assets/.*$ [OR]
+    RewriteCond %{REQUEST_URI} ^/css/.*$ [OR]
+    RewriteCond %{REQUEST_URI} ^/js/.*$ [OR]
+    RewriteCond %{REQUEST_URI} ^/images/.*$
+    RewriteRule ^(.*)$ - [L]
+
+    # Aturan standar CodeIgniter (Routing)
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ index.php/$1 [L]
+</IfModule>
