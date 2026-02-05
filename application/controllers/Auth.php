@@ -14,9 +14,14 @@ class Auth extends CI_Controller
 
     public function index()
     {
-        // Cek jika user sudah login, langsung lempar ke halaman Dashboard
+        // [UPDATE] Cek jika user sudah login, redirect sesuai ROLE
         if ($this->session->userdata('id_user')) {
-            redirect('dashboard');
+            $role = $this->session->userdata('role');
+            if ($role == 'bendahara') {
+                redirect('bendahara');
+            } else {
+                redirect('dashboard');
+            }
         }
         $this->load->view('v_login');
     }
@@ -31,15 +36,14 @@ class Auth extends CI_Controller
         $user = $this->M_inventory->cek_login($username);
 
         if ($user) {
-            // [UPDATE PENTING] Cek Password menggunakan Hash
-            // Gunakan password_verify() untuk mencocokkan input dengan hash di DB
+            // Cek Password menggunakan Hash (password_verify)
             if (password_verify($password, $user->password)) {
 
-                // Set Session Data
+                // Set Session Data (Sesuai file lama Anda)
                 $session_data = [
                     'id_user'   => $user->id_user,
                     'nama'      => $user->nama_lengkap,
-                    'role'      => $user->role, // 'admin' atau 'operator'
+                    'role'      => $user->role, // 'admin', 'operator', atau 'bendahara'
                     'logged_in' => TRUE
                 ];
                 $this->session->set_userdata($session_data);
@@ -49,8 +53,12 @@ class Auth extends CI_Controller
                 $this->session->set_flashdata('swal_title', 'Login Berhasil!');
                 $this->session->set_flashdata('swal_text', 'Selamat datang kembali, ' . $user->nama_lengkap);
 
-                // Redirect ke Dashboard
-                redirect('dashboard');
+                // [UPDATE LOGIC] Redirect Berdasarkan Role
+                if ($user->role == 'bendahara') {
+                    redirect('bendahara');
+                } else {
+                    redirect('dashboard');
+                }
             } else {
                 // Password Salah
                 $this->session->set_flashdata('error', 'Password yang Anda masukkan salah.');

@@ -281,33 +281,101 @@
                     </button>
                 </div>
 
-                <?php $segment = $this->uri->segment(1); ?>
+                <?php
+                $segment1 = $this->uri->segment(1);
+                $segment2 = $this->uri->segment(2);
+                $role = $this->session->userdata('role');
+                ?>
 
-                <a href="<?= base_url('dashboard') ?>" class="<?= ($segment == 'dashboard') ? 'active' : '' ?>">
-                    <i class="fas fa-tachometer-alt"></i> Dashboard
-                </a>
+                <!-- [PERBAIKAN] LINK DASHBOARD SESUAI ROLE -->
+                <?php if ($role == 'bendahara'): ?>
+                    <!-- Jika Bendahara, ke Dashboard Keuangan (Bendahara/index) -->
+                    <a href="<?= base_url('bendahara') ?>" class="<?= ($segment1 == 'bendahara' && ($segment2 == '' || $segment2 == 'index')) ? 'active' : '' ?>">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                <?php else: ?>
+                    <!-- Jika Admin/Operator, ke Dashboard Utama (Dashboard/index) -->
+                    <a href="<?= base_url('dashboard') ?>" class="<?= ($segment1 == 'dashboard') ? 'active' : '' ?>">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                <?php endif; ?>
 
-                <?php if ($this->session->userdata('role') == 'admin'): ?>
-                    <a href="<?= base_url('barang') ?>" class="<?= ($segment == 'barang') ? 'active' : '' ?>">
+                <!-- ADMIN ONLY MENU -->
+                <?php if ($role == 'admin'): ?>
+                    <a href="<?= base_url('barang') ?>" class="<?= ($segment1 == 'barang') ? 'active' : '' ?>">
                         <i class="fas fa-box-open"></i> Master Barang
                     </a>
 
-                    <a href="<?= base_url('tracking') ?>" class="<?= ($segment == 'tracking') ? 'active' : '' ?>">
+                    <a href="<?= base_url('tracking') ?>" class="<?= ($segment1 == 'tracking') ? 'active' : '' ?>">
                         <i class="fas fa-map-marked-alt"></i> Tracking Barang
                     </a>
 
-                    <!-- [BARU] Menu Riwayat Tugas Operator -->
-                    <a href="<?= base_url('riwayat') ?>" class="<?= ($segment == 'riwayat') ? 'active' : '' ?>">
+                    <a href="<?= base_url('riwayat') ?>" class="<?= ($segment1 == 'riwayat') ? 'active' : '' ?>">
                         <i class="fas fa-user-clock"></i> Riwayat Tugas
                     </a>
                 <?php endif; ?>
 
-                <a href="<?= base_url('laporan') ?>" class="<?= ($segment == 'laporan') ? 'active' : '' ?>">
-                    <i class="fas fa-clipboard-list"></i> Laporan Event
-                </a>
+                <!-- FINANCE MENU (ADMIN & BENDAHARA) -->
+                <?php if ($role == 'admin' || $role == 'bendahara'): ?>
+                    <hr class="sidebar-divider my-2">
 
-                <?php if ($this->session->userdata('role') == 'admin'): ?>
-                    <a href="<?= base_url('users') ?>" class="<?= ($segment == 'users') ? 'active' : '' ?>">
+                    <div class="sidebar-heading px-3 mt-2 mb-1 text-muted text-uppercase" style="font-size: 0.75rem;">
+                        Finance
+                    </div>
+
+                    <!-- 1. Laporan Keuangan -->
+                    <a href="<?= base_url('bendahara/laporan') ?>" class="<?= ($segment1 == 'bendahara' && ($segment2 == 'laporan' || $segment2 == 'buat_laporan' || $segment2 == 'detail')) ? 'active' : '' ?>">
+                        <i class="fas fa-file-invoice-dollar"></i> Laporan Keuangan
+                    </a>
+
+                    <!-- 2. Payroll Operator -->
+                    <a href="<?= base_url('bendahara/payroll') ?>" class="<?= ($segment1 == 'bendahara' && ($segment2 == 'payroll' || $segment2 == 'slip_gaji')) ? 'active' : '' ?>">
+                        <i class="fas fa-money-check-alt"></i> Payroll Operator
+                    </a>
+
+                    <!-- 3. Manajemen Kasbon -->
+                    <a href="<?= base_url('bendahara/kasbon') ?>" class="<?= ($segment1 == 'bendahara' && $segment2 == 'kasbon') ? 'active' : '' ?>">
+                        <i class="fas fa-hand-holding-usd"></i> Manajemen Kasbon
+                    </a>
+
+                    <!-- [BARU] 4. BUKU KAS UMUM -->
+                    <a href="<?= base_url('bendahara/buku_kas') ?>" class="<?= ($segment1 == 'bendahara' && $segment2 == 'buku_kas') ? 'active' : '' ?>">
+                        <i class="fas fa-book-open"></i> Buku Kas Umum
+                    </a>
+
+                    <!-- 5. Master Kategori -->
+                    <a href="<?= base_url('bendahara/kategori') ?>" class="<?= ($segment1 == 'bendahara' && $segment2 == 'kategori') ? 'active' : '' ?>">
+                        <i class="fas fa-tags"></i> Kategori Pengeluaran
+                    </a>
+                <?php endif; ?>
+
+                <!-- MENU KHUSUS OPERATOR -->
+                <?php if ($role == 'operator'): ?>
+                    <hr class="sidebar-divider my-2">
+                    <div class="sidebar-heading px-3 mt-2 mb-1 text-muted text-uppercase" style="font-size: 0.75rem;">
+                        Personil
+                    </div>
+
+                    <a href="<?= base_url('gaji') ?>" class="<?= ($segment1 == 'gaji') ? 'active' : '' ?>">
+                        <i class="fas fa-wallet"></i> Gaji Saya
+                    </a>
+                <?php endif; ?>
+
+                <!-- OPERASIONAL (ADMIN & OPERATOR) - Bendahara TIDAK melihat ini -->
+                <?php if ($role != 'bendahara'): ?>
+                    <hr class="sidebar-divider my-2">
+                    <div class="sidebar-heading px-3 mt-2 mb-1 text-muted text-uppercase" style="font-size: 0.75rem;">
+                        Operasional
+                    </div>
+
+                    <a href="<?= base_url('laporan') ?>" class="<?= ($segment1 == 'laporan') ? 'active' : '' ?>">
+                        <i class="fas fa-clipboard-list"></i> Laporan Event
+                    </a>
+                <?php endif; ?>
+
+                <!-- USER MANAGER (ADMIN ONLY) -->
+                <?php if ($role == 'admin'): ?>
+                    <a href="<?= base_url('users') ?>" class="<?= ($segment1 == 'users') ? 'active' : '' ?>">
                         <i class="fas fa-users-cog"></i> User Manager
                     </a>
                 <?php endif; ?>
