@@ -1,191 +1,253 @@
 <div class="container-fluid">
+    <!-- TOOLBAR ATAS -->
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800" style="font-weight: 700;">Buku Kas Umum</h1>
-        <button class="btn btn-sm btn-danger shadow-sm" onclick="openModalTambah()" style="background-color: #C60000; border-color: #C60000;">
-            <i class="fas fa-plus mr-1"></i> Catat Transaksi
-        </button>
+
+        <!-- Action Buttons -->
+        <div>
+            <!-- Link ke Halaman Cetak (Membuka Tab Baru) -->
+            <?php
+            $link_cetak = base_url('bendahara/cetak_buku_kas?tahun=' . $filter_tahun);
+            if ($filter_bulan) $link_cetak .= '&bulan=' . $filter_bulan;
+            ?>
+            <a href="<?= $link_cetak ?>" target="_blank" class="btn btn-sm btn-primary shadow-sm mr-2">
+                <i class="fas fa-file-pdf mr-1"></i> Preview & Download PDF
+            </a>
+
+            <!-- Tombol Tambah Manual -->
+            <button class="btn btn-sm btn-success shadow-sm" data-toggle="modal" data-target="#modalTambahKas">
+                <i class="fas fa-plus mr-1"></i> Transaksi Manual
+            </button>
+        </div>
     </div>
 
-    <!-- INFO SALDO -->
+    <!-- INFO CARDS (Rincian Saldo) -->
     <div class="row mb-4">
-        <div class="col-xl-4 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
+        <!-- 1. Saldo Real (Fisik) -->
+        <div class="col-xl-3 col-md-6 mb-2">
+            <div class="card border-left-primary shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Total Saldo Kas (Realtime)</div>
-                            <div class="h3 mb-0 font-weight-bold text-gray-800">Rp <?= number_format($saldo_akhir, 0, ',', '.') ?></div>
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Uang Fisik</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">Rp <?= number_format($saldo_real, 0, ',', '.') ?></div>
                         </div>
-                        <div class="col-auto">
-                            <i class="fas fa-wallet fa-2x text-gray-300"></i>
-                        </div>
+                        <div class="col-auto"><i class="fas fa-wallet fa-2x text-gray-300"></i></div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Filter -->
-        <div class="col-xl-8 col-md-6 mb-4">
-            <div class="card shadow h-100 border-0">
-                <div class="card-body d-flex align-items-center">
-                    <form method="get" action="" class="form-inline w-100">
-                        <label class="mr-2 font-weight-bold">Filter:</label>
-                        <select name="bulan" class="form-control form-control-sm mr-2">
-                            <option value="">-- Semua Bulan --</option>
-                            <?php
-                            $bln = [1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'Mei', 6 => 'Jun', 7 => 'Jul', 8 => 'Agu', 9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des'];
-                            foreach ($bln as $k => $v) {
-                                $sel = ($filter_bulan == $k) ? 'selected' : '';
-                                echo "<option value='$k' $sel>$v</option>";
-                            }
-                            ?>
-                        </select>
-                        <select name="tahun" class="form-control form-control-sm mr-2">
-                            <?php for ($y = date('Y'); $y >= 2023; $y--) {
-                                $sel = ($filter_tahun == $y) ? 'selected' : '';
-                                echo "<option value='$y' $sel>$y</option>";
-                            } ?>
-                        </select>
-                        <button type="submit" class="btn btn-sm btn-secondary"><i class="fas fa-search"></i></button>
-                    </form>
+        <!-- 2. Kas PT -->
+        <div class="col-xl-3 col-md-6 mb-2">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Kas PT (Available)</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">Rp <?= number_format($saldo_kas_pt_now, 0, ',', '.') ?></div>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-building fa-2x text-gray-300"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 3. Angsuran -->
+        <div class="col-xl-3 col-md-6 mb-2">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Dana Angsuran</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">Rp <?= number_format($saldo_angsuran_now, 0, ',', '.') ?></div>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-piggy-bank fa-2x text-gray-300"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 4. Royalti -->
+        <div class="col-xl-3 col-md-6 mb-2">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Dana Royalti</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">Rp <?= number_format($saldo_royalti_now, 0, ',', '.') ?></div>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-crown fa-2x text-gray-300"></i></div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- TABEL KAS -->
+    <!-- FILTER PERIODE -->
     <div class="card shadow mb-4 border-0">
+        <div class="card-body py-3">
+            <form action="" method="get" class="form-inline">
+                <label class="mr-2 font-weight-bold">Filter:</label>
+                <select name="bulan" class="form-control form-control-sm mr-2">
+                    <option value="">Semua Bulan</option>
+                    <?php
+                    $bln = [
+                        1 => 'Januari',
+                        2 => 'Februari',
+                        3 => 'Maret',
+                        4 => 'April',
+                        5 => 'Mei',
+                        6 => 'Juni',
+                        7 => 'Juli',
+                        8 => 'Agustus',
+                        9 => 'September',
+                        10 => 'Oktober',
+                        11 => 'November',
+                        12 => 'Desember'
+                    ];
+                    foreach ($bln as $k => $v) {
+                        $sel = ($k == $filter_bulan) ? 'selected' : '';
+                        echo "<option value='$k' $sel>$v</option>";
+                    }
+                    ?>
+                </select>
+                <select name="tahun" class="form-control form-control-sm mr-2">
+                    <?php for ($y = date('Y'); $y >= 2020; $y--): ?>
+                        <option value="<?= $y ?>" <?= ($y == $filter_tahun) ? 'selected' : '' ?>><?= $y ?></option>
+                    <?php endfor; ?>
+                </select>
+                <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-filter"></i> Tampilkan</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- TABEL TRANSAKSI (TAMPILAN WEB) -->
+    <div class="card shadow mb-4">
         <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Riwayat Transaksi</h6>
+            <h6 class="m-0 font-weight-bold text-primary">Data Transaksi</h6>
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0">
-                    <thead class="bg-dark text-white text-center">
+                <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+                    <thead class="bg-light">
                         <tr>
-                            <th>Tanggal</th>
-                            <th>Kategori / Uraian</th>
-                            <th>Keterangan Detail</th>
+                            <th width="5%">No</th>
+                            <th width="12%">Tanggal</th>
+                            <th>Keterangan</th>
+                            <th>Kategori</th>
                             <th>Masuk</th>
                             <th>Keluar</th>
-                            <th>Aksi</th>
+                            <th width="10%">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php if (empty($kas)): ?>
+                        <?php
+                        $no = 1;
+                        $total_masuk = 0;
+                        $total_keluar = 0;
+
+                        if (empty($kas)):
+                        ?>
                             <tr>
-                                <td colspan="6" class="text-center py-4 text-muted">Belum ada transaksi pada periode ini.</td>
+                                <td colspan="7" class="text-center font-italic py-3">Tidak ada data transaksi.</td>
                             </tr>
                         <?php else: ?>
-                            <?php foreach ($kas as $k): ?>
+                            <?php foreach ($kas as $k):
+                                if ($k->jenis == 'masuk') $total_masuk += $k->nominal;
+                                else $total_keluar += $k->nominal;
+                            ?>
                                 <tr>
-                                    <td class="text-center"><?= date('d/m/Y', strtotime($k->tanggal)) ?></td>
+                                    <td class="text-center"><?= $no++ ?></td>
+                                    <td><?= date('d/m/Y', strtotime($k->tanggal)) ?></td>
                                     <td>
-                                        <?php if ($k->jenis == 'masuk'): ?>
-                                            <span class="badge badge-success"><i class="fas fa-arrow-down"></i> Masuk</span>
-                                        <?php else: ?>
-                                            <span class="badge badge-danger"><i class="fas fa-arrow-up"></i> Keluar</span>
-                                        <?php endif; ?>
-                                        <br><b><?= $k->kategori ?></b>
+                                        <div class="font-weight-bold text-dark"><?= $k->keterangan ?></div>
+                                        <small class="text-muted">Ref: <?= $k->sumber_auto ?></small>
                                     </td>
-                                    <td>
-                                        <?= $k->keterangan ?>
-                                        <?php if ($k->sumber_auto != 'manual'): ?>
-                                            <br><small class="text-info font-italic"><i class="fas fa-robot"></i> Auto by System (<?= ucfirst($k->sumber_auto) ?>)</small>
-                                        <?php endif; ?>
+                                    <td><span class="badge badge-light border"><?= $k->kategori ?></span></td>
+                                    <td class="text-right text-success">
+                                        <?= ($k->jenis == 'masuk') ? number_format($k->nominal, 0, ',', '.') : '-' ?>
                                     </td>
-                                    <td class="text-right text-success font-weight-bold">
-                                        <?= ($k->jenis == 'masuk') ? 'Rp ' . number_format($k->nominal, 0, ',', '.') : '-' ?>
-                                    </td>
-                                    <td class="text-right text-danger font-weight-bold">
-                                        <?= ($k->jenis == 'keluar') ? 'Rp ' . number_format($k->nominal, 0, ',', '.') : '-' ?>
+                                    <td class="text-right text-danger">
+                                        <?= ($k->jenis == 'keluar') ? number_format($k->nominal, 0, ',', '.') : '-' ?>
                                     </td>
                                     <td class="text-center">
                                         <?php if ($k->sumber_auto == 'manual'): ?>
-                                            <!-- Tombol Edit -->
-                                            <button onclick="editKas(<?= $k->id_kas ?>)" class="btn btn-sm btn-warning mb-1" title="Edit"><i class="fas fa-edit"></i></button>
-                                            <!-- Tombol Hapus -->
-                                            <a href="<?= base_url('bendahara/hapus_kas/' . $k->id_kas) ?>" class="btn btn-sm btn-danger mb-1" onclick="return confirm('Hapus transaksi manual ini?')" title="Hapus"><i class="fas fa-trash"></i></a>
+                                            <button class="btn btn-sm btn-info btn-edit py-0 px-2" data-id="<?= $k->id_kas ?>" data-toggle="modal" data-target="#modalTambahKas">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <a href="<?= base_url('bendahara/hapus_kas/' . $k->id_kas) ?>" class="btn btn-sm btn-danger py-0 px-2" onclick="return confirm('Hapus?')">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
                                         <?php else: ?>
-                                            <span class="text-muted" title="Transaksi otomatis tidak bisa diedit"><i class="fas fa-lock"></i></span>
+                                            <button class="btn btn-sm btn-secondary py-0 px-2" disabled><i class="fas fa-lock"></i></button>
                                         <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </tbody>
+                    <tfoot class="bg-light font-weight-bold">
+                        <tr>
+                            <td colspan="4" class="text-right">Total Periode Ini</td>
+                            <td class="text-right text-success">Rp <?= number_format($total_masuk, 0, ',', '.') ?></td>
+                            <td class="text-right text-danger">Rp <?= number_format($total_keluar, 0, ',', '.') ?></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal Input Manual -->
-<div class="modal fade" id="modalInput" tabindex="-1">
+<!-- Modal Tambah/Edit Kas -->
+<div class="modal fade" id="modalTambahKas" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form action="<?= base_url('bendahara/tambah_kas') ?>" method="post" id="formKas">
-                <!-- ID KAS (Untuk Edit, kosong jika tambah baru) -->
+            <form action="<?= base_url('bendahara/tambah_kas') ?>" method="post">
                 <input type="hidden" name="id_kas" id="id_kas">
-
-                <!-- Header Tema Brand Primary (Merah) -->
-                <div class="modal-header text-white" style="background-color: #C60000;">
-                    <h5 class="modal-title" style="font-family: 'Oswald', sans-serif;" id="modalTitle">Input Transaksi Kas</h5>
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalTitle">Catat Transaksi Manual</h5>
                     <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label class="font-weight-bold">Tanggal Transaksi</label>
+                        <label>Tanggal Transaksi</label>
                         <input type="date" name="tanggal" id="tanggal" class="form-control" value="<?= date('Y-m-d') ?>" required>
                     </div>
-
                     <div class="form-group">
-                        <label class="font-weight-bold">Jenis Transaksi</label>
+                        <label>Jenis Transaksi</label>
                         <select name="jenis" id="jenis" class="form-control" required>
-                            <option value="keluar">Pengeluaran (Uang Keluar)</option>
                             <option value="masuk">Pemasukan (Uang Masuk)</option>
+                            <option value="keluar">Pengeluaran (Uang Keluar)</option>
                         </select>
                     </div>
-
-                    <!-- Kategori Dropdown dengan Opsi Default -->
                     <div class="form-group">
-                        <label class="font-weight-bold">Kategori</label>
+                        <label>Kategori</label>
                         <select name="kategori" id="kategori" class="form-control" required>
                             <option value="">-- Pilih Kategori --</option>
-                            <optgroup label="Pengeluaran Wajib">
-                                <option value="Pembayaran Angsuran">Pembayaran Angsuran</option>
-                                <option value="Pembayaran Royalti">Pembayaran Royalti</option>
-                            </optgroup>
-                            <optgroup label="Operasional Lainnya">
-                                <?php foreach ($kategori_ops as $k): ?>
-                                    <option value="<?= $k->nama_kategori ?>"><?= $k->nama_kategori ?></option>
-                                <?php endforeach; ?>
-                                <option value="Lainnya">Lainnya (Manual Input di Keterangan)</option>
-                            </optgroup>
+                            <option value="Lain-lain">Lain-lain</option>
+                            <!-- [UPDATE] Opsi khusus untuk mengurangi saldo Angsuran & Royalti -->
+                            <option value="Pembayaran Angsuran" class="font-weight-bold text-danger">Pembayaran Angsuran</option>
+                            <option value="Pembayaran Royalti" class="font-weight-bold text-danger">Pembayaran Royalti</option>
+
+                            <option disabled>------------------------</option>
+                            <?php foreach ($kategori_ops as $kat): ?>
+                                <option value="<?= $kat->nama_kategori ?>"><?= $kat->nama_kategori ?></option>
+                            <?php endforeach; ?>
                         </select>
-                        <small class="text-muted">Pilih "Pembayaran Angsuran" atau "Royalti" jika ingin mengurangi saldo pos tersebut.</small>
+                        <small class="text-muted">Pilih "Pembayaran Angsuran/Royalti" jika ingin mengurangi saldo dana tersebut.</small>
                     </div>
-
-                    <!-- Input Nominal Auto Format -->
                     <div class="form-group">
-                        <label class="font-weight-bold">Nominal (Rp)</label>
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text font-weight-bold">Rp</span>
-                            </div>
-                            <input type="text" id="nominal_display" class="form-control rupiah-input font-weight-bold" placeholder="0" required style="font-size: 1.2rem;">
-                            <input type="hidden" name="nominal" id="nominal_db">
-                        </div>
+                        <label>Nominal (Rp)</label>
+                        <input type="number" name="nominal" id="nominal" class="form-control" placeholder="0" required>
                     </div>
-
                     <div class="form-group">
-                        <label class="font-weight-bold">Keterangan Lengkap</label>
-                        <textarea name="keterangan" id="keterangan" class="form-control" rows="2" placeholder="Detail transaksi..."></textarea>
+                        <label>Keterangan</label>
+                        <textarea name="keterangan" id="keterangan" class="form-control" rows="2" required></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-danger" style="background-color: #C60000; border-color: #C60000;">Simpan</button>
+                    <button type="submit" class="btn btn-primary">Simpan Transaksi</button>
                 </div>
             </form>
         </div>
@@ -194,37 +256,12 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    // Fungsi Format Rupiah
-    function formatRupiah(angka, prefix) {
-        var number_string = angka.replace(/[^,\d]/g, '').toString(),
-            split = number_string.split(','),
-            sisa = split[0].length % 3,
-            rupiah = split[0].substr(0, sisa),
-            ribuan = split[0].substr(sisa).match(/\d{3}/gi);
-
-        if (ribuan) {
-            separator = sisa ? '.' : '';
-            rupiah += separator + ribuan.join('.');
-        }
-
-        rupiah = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
-        return prefix == undefined ? rupiah : (rupiah ? 'Rp. ' + rupiah : '');
-    }
-
-    // Reset modal untuk input baru
-    function openModalTambah() {
-        $('#formKas')[0].reset();
-        $('#id_kas').val('');
-        $('#modalTitle').text('Input Transaksi Kas');
-        $('#nominal_display').val('');
-        $('#nominal_db').val('');
-        $('#modalInput').modal('show');
-    }
-
-    // Isi modal untuk edit data
-    function editKas(id) {
+    // Edit Modal Logic
+    $(document).on('click', '.btn-edit', function() {
+        var id = $(this).data('id');
+        $('#modalTitle').text('Edit Transaksi Manual');
         $.ajax({
-            url: '<?= base_url("bendahara/get_kas_ajax") ?>',
+            url: '<?= base_url('bendahara/get_kas_ajax') ?>',
             type: 'POST',
             data: {
                 id: id
@@ -234,43 +271,16 @@
                 $('#id_kas').val(data.id_kas);
                 $('#tanggal').val(data.tanggal);
                 $('#jenis').val(data.jenis);
-
-                // Set Kategori (Handle jika kategori tidak ada di opsi)
-                if ($("#kategori option[value='" + data.kategori + "']").length > 0) {
-                    $('#kategori').val(data.kategori);
-                } else {
-                    $('#kategori').val('Lainnya');
-                    // Tambahkan nama kategori asli ke keterangan jika belum ada
-                    if (!data.keterangan.includes(data.kategori)) {
-                        $('#keterangan').val('[' + data.kategori + '] ' + data.keterangan);
-                    } else {
-                        $('#keterangan').val(data.keterangan);
-                    }
-                }
-
-                $('#nominal_db').val(data.nominal);
-                $('#nominal_display').val(formatRupiah(data.nominal));
+                $('#kategori').val(data.kategori);
+                $('#nominal').val(data.nominal);
                 $('#keterangan').val(data.keterangan);
-
-                $('#modalTitle').text('Edit Transaksi Kas');
-                $('#modalInput').modal('show');
             }
         });
-    }
+    });
 
-    $(document).ready(function() {
-        // Format saat mengetik
-        $('.rupiah-input').on('keyup', function() {
-            $(this).val(formatRupiah($(this).val()));
-            let cleanVal = $(this).val().replace(/\./g, '');
-            $('#nominal_db').val(cleanVal);
-        });
-
-        // Validasi sebelum submit
-        $('#formKas').on('submit', function() {
-            let cleanVal = $('#nominal_display').val().replace(/\./g, '');
-            $('#nominal_db').val(cleanVal);
-            return true;
-        });
+    $('#modalTambahKas').on('hidden.bs.modal', function() {
+        $('#modalTitle').text('Catat Transaksi Manual');
+        $('form')[0].reset();
+        $('#id_kas').val('');
     });
 </script>

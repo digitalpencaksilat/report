@@ -8,163 +8,172 @@
         <input type="hidden" name="id_keuangan" value="<?= $header->id_keuangan ?>">
         <input type="hidden" name="id_peminjaman" value="<?= $header->id_peminjaman ?>">
 
-        <!-- CARD 1: INFORMASI EVENT (READ ONLY) -->
+        <!-- INFO EVENT -->
         <div class="card shadow mb-4">
             <div class="card-header py-3 bg-warning text-white">
-                <h6 class="m-0 font-weight-bold">1. Informasi Event (Tidak Dapat Diubah)</h6>
+                <h6 class="m-0 font-weight-bold">1. Informasi Event (Read Only)</h6>
             </div>
             <div class="card-body bg-light">
                 <div class="row">
                     <div class="col-md-6">
-                        <table class="table table-borderless table-sm">
-                            <tr>
-                                <td width="30%">Nama Event</td>
-                                <td>: <b><?= $header->nama_event ?></b></td>
-                            </tr>
-                            <tr>
-                                <td>Lokasi</td>
-                                <td>: <?= $header->lokasi_event ?></td>
-                            </tr>
-                            <tr>
-                                <td>Kode Transaksi</td>
-                                <td>: <?= $header->kode_transaksi ?></td>
-                            </tr>
-                        </table>
+                        <strong>Event:</strong> <?= $header->nama_event ?><br>
+                        <strong>Kode:</strong> <?= $header->kode_transaksi ?>
                     </div>
-                    <div class="col-md-6">
-                        <table class="table table-borderless table-sm">
-                            <tr>
-                                <td width="30%">Tgl Pinjam</td>
-                                <td>: <?= date('d M Y', strtotime($header->tgl_pinjam)) ?></td>
-                            </tr>
-                            <tr>
-                                <td>Tgl Kembali</td>
-                                <td>: <?= date('d M Y', strtotime($header->tgl_kembali_realisasi)) ?></td>
-                            </tr>
-                        </table>
+                    <div class="col-md-6 text-right">
+                        <strong>Tanggal:</strong> <?= date('d M Y', strtotime($header->tgl_pinjam)) ?>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- CARD 2: PEMASUKAN -->
+        <!-- CARD 1: SUMBER PEMASUKAN -->
         <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">2. Rincian Pemasukan</h6>
+            <div class="card-header py-3 bg-success text-white">
+                <h6 class="m-0 font-weight-bold">2. Sumber Pemasukan</h6>
             </div>
             <div class="card-body">
-                <div class="form-group">
-                    <label>Jenis Pemasukan</label>
-                    <select name="jenis_pemasukan" id="jenis_pemasukan" class="form-control" required>
-                        <option value="global" <?= $header->jenis_pemasukan == 'global' ? 'selected' : '' ?>>Global (Langsung Total)</option>
-                        <option value="detail" <?= $header->jenis_pemasukan == 'detail' ? 'selected' : '' ?>>Detail (Hitung per Set/Gelanggang)</option>
-                    </select>
-                </div>
 
-                <!-- Input Detail -->
-                <div id="input_detail" style="display: <?= $header->jenis_pemasukan == 'detail' ? 'block' : 'none' ?>;">
-                    <div class="form-row">
-                        <div class="col-md-4 mb-3">
-                            <label>Harga per Set (Rp)</label>
-                            <input type="number" id="harga_set" name="harga_set" class="form-control hitung-income" value="<?= $header->harga_set ?>">
+                <!-- A. PEMASUKAN IT -->
+                <div class="form-group border rounded p-3 mb-3 bg-light">
+                    <div class="custom-control custom-checkbox mb-2">
+                        <input type="checkbox" class="custom-control-input hitung-income-trigger" id="check_it" name="check_it" <?= $header->income_it_active ? 'checked' : '' ?>>
+                        <label class="custom-control-label font-weight-bold text-primary" for="check_it">A. Pemasukan IT</label>
+                    </div>
+                    <div id="box_it" style="display: <?= $header->income_it_active ? 'block' : 'none' ?>;">
+                        <div class="form-group">
+                            <label>Metode</label>
+                            <select name="jenis_pemasukan" id="jenis_pemasukan" class="form-control form-control-sm">
+                                <option value="detail" <?= $header->jenis_pemasukan == 'detail' ? 'selected' : '' ?>>Detail</option>
+                                <option value="global" <?= $header->jenis_pemasukan == 'global' ? 'selected' : '' ?>>Global / Borongan</option>
+                            </select>
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <label>Jml Gelanggang</label>
-                            <input type="number" id="jml_gelanggang" name="jml_gelanggang" class="form-control hitung-income" value="<?= $header->jml_gelanggang ?>">
+                        <div id="input_detail_it" class="form-row" style="display: <?= $header->jenis_pemasukan == 'detail' ? 'flex' : 'none' ?>;">
+                            <div class="col-md-4"><label>Harga (Rp)</label><input type="text" id="harga_set" name="harga_set" class="form-control hitung-income rupiah-input" value="<?= number_format($header->harga_set, 0, ',', '.') ?>"></div>
+                            <div class="col-md-4"><label>Jml Gel</label><input type="number" id="jml_gelanggang" name="jml_gelanggang" class="form-control hitung-income" value="<?= $header->jml_gelanggang ?>"></div>
+                            <div class="col-md-4"><label>Hari</label><input type="number" id="jml_hari" name="jml_hari" class="form-control hitung-income" value="<?= $header->jml_hari ?>"></div>
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <label>Jml Hari</label>
-                            <input type="number" id="jml_hari" name="jml_hari" class="form-control hitung-income" value="<?= $header->jml_hari ?>">
+                        <div class="mt-2">
+                            <label class="small font-weight-bold">Subtotal IT</label>
+                            <?php
+                            // Logic: Pastikan nilai awal dihitung dengan benar agar tidak anjlok
+                            if ($header->jenis_pemasukan == 'detail') {
+                                $sub_it_awal = (float)$header->harga_set * (float)$header->jml_gelanggang * (float)$header->jml_hari;
+                            } else {
+                                // Jika global, ambil sisa dari total dikurangi komponen lain
+                                $sub_it_awal = (float)$header->total_pemasukan - (float)$header->log_total - (float)$header->lain_nominal;
+                            }
+                            ?>
+                            <!-- Class 'hitung-income' PENTING agar bisa diedit manual dan langsung update total -->
+                            <input type="text" id="subtotal_it" name="subtotal_it" class="form-control font-weight-bold text-primary rupiah-input hitung-income" <?= $header->jenis_pemasukan == 'detail' ? 'readonly' : '' ?> value="<?= number_format($sub_it_awal, 0, ',', '.') ?>">
                         </div>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label class="font-weight-bold text-success">Total Pemasukan (Rp)</label>
-                    <input type="number" id="total_pemasukan" name="total_pemasukan_final" class="form-control font-weight-bold text-success" style="font-size: 1.5rem;" value="<?= $header->total_pemasukan ?>" <?= $header->jenis_pemasukan == 'detail' ? 'readonly' : '' ?>>
+                <!-- B. LOGISTIK -->
+                <div class="form-group border rounded p-3 mb-3 bg-light">
+                    <div class="custom-control custom-checkbox mb-2">
+                        <input type="checkbox" class="custom-control-input hitung-income-trigger" id="check_log" name="check_log" <?= $header->income_log_active ? 'checked' : '' ?>>
+                        <label class="custom-control-label font-weight-bold text-info" for="check_log">B. Pemasukan Logistik</label>
+                    </div>
+                    <div id="box_log" style="display: <?= $header->income_log_active ? 'block' : 'none' ?>;">
+                        <div class="form-group">
+                            <label>Metode</label>
+                            <?php $is_log_detail = ($header->log_harga > 0 || $header->log_qty > 0); ?>
+                            <select name="jenis_logistik" id="jenis_logistik" class="form-control form-control-sm">
+                                <option value="detail" <?= $is_log_detail ? 'selected' : '' ?>>Detail</option>
+                                <option value="global" <?= !$is_log_detail ? 'selected' : '' ?>>Global / Borongan</option>
+                            </select>
+                        </div>
+                        <div id="input_detail_log" class="form-row" style="display: <?= $is_log_detail ? 'flex' : 'none' ?>;">
+                            <div class="col-md-4"><label>Harga (Rp)</label><input type="text" id="log_harga" name="log_harga" class="form-control hitung-income rupiah-input" value="<?= number_format($header->log_harga, 0, ',', '.') ?>"></div>
+                            <div class="col-md-4"><label>Qty</label><input type="number" id="log_qty" name="log_qty" class="form-control hitung-income" value="<?= $header->log_qty ?>"></div>
+                            <div class="col-md-4"><label>Hari</label><input type="number" id="log_hari" name="log_hari" class="form-control hitung-income" value="<?= $header->log_hari ?>"></div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="small font-weight-bold">Subtotal Logistik</label>
+                            <!-- Class 'hitung-income' PENTING -->
+                            <input type="text" id="subtotal_log" name="subtotal_log" class="form-control font-weight-bold text-info rupiah-input hitung-income" <?= $is_log_detail ? 'readonly' : '' ?> value="<?= number_format($header->log_total, 0, ',', '.') ?>">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- C. LAINNYA -->
+                <div class="form-group border rounded p-3 mb-3 bg-light">
+                    <div class="custom-control custom-checkbox mb-2">
+                        <input type="checkbox" class="custom-control-input hitung-income-trigger" id="check_lain" name="check_lain" <?= $header->income_lain_active ? 'checked' : '' ?>>
+                        <label class="custom-control-label font-weight-bold text-secondary" for="check_lain">C. Pemasukan Lainnya</label>
+                    </div>
+                    <div id="box_lain" style="display: <?= $header->income_lain_active ? 'block' : 'none' ?>;">
+                        <div class="form-group"><input type="text" name="lain_keterangan" class="form-control" placeholder="Keterangan..." value="<?= $header->lain_keterangan ?>"></div>
+                        <div class="form-group"><input type="text" id="lain_nominal" name="lain_nominal" class="form-control hitung-income rupiah-input" value="<?= number_format($header->lain_nominal, 0, ',', '.') ?>"></div>
+                    </div>
+                </div>
+
+                <div class="p-3 mb-3 bg-success text-white rounded shadow-sm">
+                    <h5 class="font-weight-bold mb-0">Total: <span id="text_total_pemasukan">Rp <?= number_format($header->total_pemasukan, 0, ',', '.') ?></span></h5>
+                    <input type="hidden" id="total_pemasukan_final" name="total_pemasukan_final" value="<?= $header->total_pemasukan ?>">
                 </div>
             </div>
         </div>
 
-        <!-- CARD 3: BIAYA SDM -->
+        <!-- CARD SDM -->
         <div class="card shadow mb-4">
             <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">3. Biaya SDM / Personil</h6>
+                <h6 class="m-0 font-weight-bold text-primary">Biaya SDM</h6>
             </div>
             <div class="card-body">
-                <table class="table table-bordered table-sm" id="tabel_sdm">
-                    <thead class="bg-dark text-white text-center">
-                        <tr>
-                            <th width="20%">Nama Personil</th>
-                            <th width="15%">Honor/Hari</th>
-                            <th width="5%">Hari</th>
-                            <th width="30%">Tambahan (Set/Trans/Bonus/Data)</th>
-                            <th width="15%" class="bg-danger">Pot. Kasbon</th>
-                            <th width="15%">Total Terima</th>
-                        </tr>
-                    </thead>
-                    <tbody id="body_sdm">
-                        <?php foreach ($detail_sdm as $i => $s): ?>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm">
+                        <thead class="bg-dark text-white text-center">
                             <tr>
-                                <td>
-                                    <input type="hidden" name="sdm_id_user[]" value="<?= $s->id_user ?>">
-                                    <input type="hidden" name="sdm_peran[]" value="<?= $s->peran ?>">
-                                    <b><?= $s->nama_lengkap ?></b><br>
-                                    <small class="text-muted"><?= $s->peran ?></small><br>
-                                    <small class="text-danger font-italic">Hutang saat ini: Rp <?= number_format($s->current_hutang, 0, ',', '.') ?></small>
-                                </td>
-                                <td><input type="number" name="sdm_honor[]" class="form-control form-control-sm hitung-sdm" value="<?= $s->honor_harian ?>"></td>
-                                <td><input type="number" name="sdm_hari[]" class="form-control form-control-sm hitung-sdm" value="<?= $s->jumlah_hari ?>"></td>
-                                <td>
-                                    <div class="row no-gutters mb-1">
-                                        <div class="col"><input type="number" name="sdm_setting[]" class="form-control form-control-sm hitung-sdm" placeholder="Setting" value="<?= $s->nominal_setting ?>"></div>
-                                    </div>
-                                    <div class="row no-gutters mb-1">
-                                        <div class="col"><input type="number" name="sdm_transport[]" class="form-control form-control-sm hitung-sdm" placeholder="Transport" value="<?= $s->nominal_transport ?>"></div>
-                                    </div>
-                                    <div class="row no-gutters mb-1">
-                                        <div class="col"><input type="number" name="sdm_bonus[]" class="form-control form-control-sm hitung-sdm" placeholder="Bonus" value="<?= $s->nominal_bonus ?>"></div>
-                                    </div>
-                                    <div class="row no-gutters">
-                                        <div class="col"><input type="number" name="sdm_data[]" class="form-control form-control-sm hitung-sdm" placeholder="Data" value="<?= $s->nominal_data ?>"></div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <input type="number" name="sdm_potongan[]" class="form-control form-control-sm hitung-sdm border-danger text-danger" value="<?= $s->nominal_potongan ?>">
-                                    <small class="text-muted d-block text-center mt-1">Maks: <?= number_format($s->current_hutang + $s->nominal_potongan, 0, ',', '.') ?></small>
-                                </td>
-                                <td><input type="number" name="sdm_total[]" class="form-control form-control-sm font-weight-bold text-right" readonly value="<?= $s->total_diterima ?>"></td>
+                                <th>Nama</th>
+                                <th>Honor</th>
+                                <th>Hari</th>
+                                <th>Tambahan</th>
+                                <th>Potongan</th>
+                                <th>Total</th>
                             </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                    <tfoot class="bg-light font-weight-bold">
-                        <tr>
-                            <td colspan="5" class="text-right">Total Biaya SDM:</td>
-                            <td><input type="text" id="total_biaya_sdm_disp" class="form-control form-control-sm text-right font-weight-bold" readonly value="Rp <?= number_format($header->total_biaya_sdm, 0, ',', '.') ?>">
-                                <input type="hidden" name="total_biaya_sdm" id="total_biaya_sdm_val" value="<?= $header->total_biaya_sdm ?>">
-                            </td>
-                        </tr>
-                    </tfoot>
-                </table>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($detail_sdm as $s): ?>
+                                <tr>
+                                    <td>
+                                        <input type="hidden" name="sdm_id_user[]" value="<?= $s->id_user ?>">
+                                        <input type="hidden" name="sdm_peran[]" value="<?= $s->peran ?>">
+                                        <b><?= $s->nama_lengkap ?></b><br><small><?= $s->peran ?></small><br>
+                                        <small class="text-danger">Hutang Aktif: Rp <?= number_format($s->current_hutang, 0, ',', '.') ?></small>
+                                    </td>
+                                    <td><input type="text" name="sdm_honor[]" class="form-control form-control-sm hitung-sdm rupiah-input" value="<?= number_format($s->honor_harian, 0, ',', '.') ?>"></td>
+                                    <td><input type="number" name="sdm_hari[]" class="form-control form-control-sm hitung-sdm" value="<?= $s->jumlah_hari ?>"></td>
+                                    <td>
+                                        <input type="text" name="sdm_setting[]" class="form-control form-control-sm hitung-sdm rupiah-input mb-1" placeholder="Set" value="<?= number_format($s->nominal_setting, 0, ',', '.') ?>">
+                                        <input type="text" name="sdm_transport[]" class="form-control form-control-sm hitung-sdm rupiah-input mb-1" placeholder="Trsp" value="<?= number_format($s->nominal_transport, 0, ',', '.') ?>">
+                                        <input type="text" name="sdm_bonus[]" class="form-control form-control-sm hitung-sdm rupiah-input mb-1" placeholder="Bns" value="<?= number_format($s->nominal_bonus, 0, ',', '.') ?>">
+                                        <input type="text" name="sdm_data[]" class="form-control form-control-sm hitung-sdm rupiah-input" placeholder="Data" value="<?= number_format($s->nominal_data, 0, ',', '.') ?>">
+                                    </td>
+                                    <td><input type="text" name="sdm_potongan[]" class="form-control form-control-sm hitung-sdm text-danger rupiah-input" value="<?= number_format($s->nominal_potongan, 0, ',', '.') ?>"></td>
+                                    <td><input type="text" name="sdm_total[]" class="form-control form-control-sm font-weight-bold text-right rupiah-input" readonly value="<?= number_format($s->total_diterima, 0, ',', '.') ?>"></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="5" class="text-right">Total:</td>
+                                <td><input type="text" id="total_biaya_sdm_disp" class="form-control form-control-sm text-right font-weight-bold rupiah-input" readonly value="<?= number_format($header->total_biaya_sdm, 0, ',', '.') ?>"><input type="hidden" name="total_biaya_sdm" id="total_biaya_sdm_val" value="<?= $header->total_biaya_sdm ?>"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
             </div>
         </div>
 
-        <!-- CARD 4: OPERASIONAL -->
+        <!-- CARD OPS -->
         <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                <h6 class="m-0 font-weight-bold text-primary">4. Biaya Operasional</h6>
-                <button type="button" class="btn btn-sm btn-success" onclick="addOpsRow()"><i class="fas fa-plus"></i> Tambah Item</button>
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Biaya Operasional</h6>
             </div>
             <div class="card-body">
                 <table class="table table-bordered table-sm">
-                    <thead>
-                        <tr>
-                            <th>Kategori</th>
-                            <th>Keterangan</th>
-                            <th width="20%">Nominal (Rp)</th>
-                            <th width="5%">#</th>
-                        </tr>
-                    </thead>
                     <tbody id="body_ops">
                         <?php foreach ($detail_ops as $o): ?>
                             <tr>
@@ -176,217 +185,313 @@
                                     </select>
                                 </td>
                                 <td><input type="text" name="ops_keterangan[]" class="form-control form-control-sm" value="<?= $o->keterangan ?>"></td>
-                                <td><input type="number" name="ops_nominal[]" class="form-control form-control-sm hitung-ops text-right" value="<?= $o->nominal ?>"></td>
+                                <td><input type="text" name="ops_nominal[]" class="form-control form-control-sm hitung-ops text-right rupiah-input" value="<?= number_format($o->nominal, 0, ',', '.') ?>"></td>
                                 <td class="text-center"><button type="button" class="btn btn-danger btn-sm remove-row"><i class="fas fa-trash"></i></button></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="2" class="text-right font-weight-bold">Total Operasional:</td>
-                            <td>
-                                <input type="text" id="total_biaya_ops_disp" class="form-control form-control-sm text-right font-weight-bold" readonly value="Rp <?= number_format($header->total_biaya_ops, 0, ',', '.') ?>">
-                                <input type="hidden" name="total_biaya_ops" id="total_biaya_ops_val" value="<?= $header->total_biaya_ops ?>">
-                            </td>
+                            <td colspan="2" class="text-right">Total:</td>
+                            <td><input type="text" id="total_biaya_ops_disp" class="form-control form-control-sm text-right font-weight-bold rupiah-input" readonly value="<?= number_format($header->total_biaya_ops, 0, ',', '.') ?>"><input type="hidden" name="total_biaya_ops" id="total_biaya_ops_val" value="<?= $header->total_biaya_ops ?>"></td>
                             <td></td>
                         </tr>
                     </tfoot>
                 </table>
+                <button type="button" class="btn btn-sm btn-success mt-2" onclick="addOpsRow()">+ Item</button>
             </div>
         </div>
 
-        <!-- CARD 5: REKAPITULASI & BAGI HASIL -->
-        <div class="card shadow mb-4 border-left-primary">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">5. Rekapitulasi & Bagi Hasil</h6>
-            </div>
+        <!-- REKAPITULASI -->
+        <div class="card shadow mb-4 border-left-danger">
             <div class="card-body">
-                <!-- Fee Marketing -->
                 <div class="form-group row">
-                    <label class="col-sm-3 col-form-label">Fee Marketing Internal</label>
-                    <div class="col-sm-1"><input type="checkbox" id="fee_intern_check" name="fee_intern_check" class="form-control" <?= $header->fee_intern_active ? 'checked' : '' ?>></div>
-                    <div class="col-sm-8"><input type="number" id="fee_intern_val" name="fee_intern_val" class="form-control hitung-laba" placeholder="Nominal" value="<?= $header->fee_intern_nominal ?>" <?= $header->fee_intern_active ? '' : 'disabled' ?>></div>
+                    <label class="col-sm-3">Fee Intern (5%)</label>
+                    <div class="col-sm-1"><input type="checkbox" id="fee_intern_check" name="fee_intern_check" class="form-control hitung-laba" <?= $header->fee_intern_active ? 'checked' : '' ?>></div>
+                    <div class="col-sm-8"><input type="text" id="fee_intern_val" name="fee_intern_val" class="form-control hitung-laba rupiah-input" readonly value="<?= number_format($header->fee_intern_nominal, 0, ',', '.') ?>"></div>
                 </div>
                 <div class="form-group row">
-                    <label class="col-sm-3 col-form-label">Fee Marketing Eksternal</label>
-                    <div class="col-sm-1"><input type="checkbox" id="fee_ekstern_check" name="fee_ekstern_check" class="form-control" <?= $header->fee_ekstern_active ? 'checked' : '' ?>></div>
-                    <div class="col-sm-8"><input type="number" id="fee_ekstern_val" name="fee_ekstern_val" class="form-control hitung-laba" placeholder="Nominal" value="<?= $header->fee_ekstern_nominal ?>" <?= $header->fee_ekstern_active ? '' : 'disabled' ?>></div>
+                    <label class="col-sm-3">Fee Ekstern (5%)</label>
+                    <div class="col-sm-1"><input type="checkbox" id="fee_ekstern_check" name="fee_ekstern_check" class="form-control hitung-laba" <?= $header->fee_ekstern_active ? 'checked' : '' ?>></div>
+                    <div class="col-sm-8"><input type="text" id="fee_ekstern_val" name="fee_ekstern_val" class="form-control hitung-laba rupiah-input" readonly value="<?= number_format($header->fee_ekstern_nominal, 0, ',', '.') ?>"></div>
                 </div>
-                <hr>
 
-                <!-- Laba Bersih -->
                 <div class="form-group row">
-                    <label class="col-sm-4 col-form-label font-weight-bold text-uppercase">Laba Bersih (Net Profit)</label>
+                    <label class="col-sm-4 font-weight-bold">Laba Bersih</label>
                     <div class="col-sm-8">
-                        <input type="text" id="laba_bersih_disp" class="form-control font-weight-bold text-primary" style="font-size: 1.2rem;" readonly value="Rp <?= number_format($header->laba_kotor, 0, ',', '.') ?>">
+                        <input type="text" id="laba_bersih_disp" class="form-control font-weight-bold text-danger rupiah-input" style="font-size: 1.5rem;" readonly value="<?= number_format($header->laba_kotor, 0, ',', '.') ?>">
                         <input type="hidden" id="laba_bersih_val" name="laba_bersih_val" value="<?= $header->laba_kotor ?>">
                     </div>
                 </div>
 
-                <!-- Pembagian Hasil -->
-                <div class="alert alert-secondary">
-                    <h6 class="font-weight-bold">Alokasi Pembagian Hasil (33.3% Rules)</h6>
-                    <div class="form-row">
-                        <div class="col">
-                            <label>Kas PT</label>
-                            <input type="number" id="share_kas" name="share_kas_val" class="form-control font-weight-bold" readonly value="<?= $header->kas_pt_nominal ?>">
-                        </div>
-                        <div class="col">
-                            <label>Angsuran</label>
-                            <input type="number" id="share_angsuran" name="share_angsuran_val" class="form-control font-weight-bold" readonly value="<?= $header->angsuran_nominal ?>">
-                        </div>
-                        <div class="col">
-                            <label>Royalti</label>
-                            <input type="number" id="share_royalti" name="share_royalti_val" class="form-control font-weight-bold" readonly value="<?= $header->royalti_nominal ?>">
-                        </div>
+                <div class="p-3 mb-3 bg-light border rounded">
+                    <div class="form-row mb-2">
+                        <div class="col-4"><input type="checkbox" class="hitung-share-trigger" id="share_kas_check" name="share_kas_check" <?= $header->share_kas_active ? 'checked' : '' ?>> Kas PT</div>
+                        <div class="col-8"><input type="text" id="share_kas_val" name="share_kas_val" class="form-control font-weight-bold rupiah-input" readonly value="<?= number_format($header->kas_pt_nominal, 0, ',', '.') ?>"></div>
+                    </div>
+                    <div class="form-row mb-2">
+                        <div class="col-4"><input type="checkbox" class="hitung-share-trigger" id="share_angsuran_check" name="share_angsuran_check" <?= $header->share_angsuran_active ? 'checked' : '' ?>> Angsuran</div>
+                        <div class="col-8"><input type="text" id="share_angsuran_val" name="share_angsuran_val" class="form-control font-weight-bold rupiah-input" readonly value="<?= number_format($header->angsuran_nominal, 0, ',', '.') ?>"></div>
+                    </div>
+                    <div class="form-row mb-2">
+                        <div class="col-4"><input type="checkbox" class="hitung-share-trigger" id="share_royalti_check" name="share_royalti_check" <?= $header->share_royalti_active ? 'checked' : '' ?>> Royalti</div>
+                        <div class="col-8"><input type="text" id="share_royalti_val" name="share_royalti_val" class="form-control font-weight-bold rupiah-input" readonly value="<?= number_format($header->royalti_nominal, 0, ',', '.') ?>"></div>
                     </div>
                 </div>
 
-                <div class="text-right mt-4">
-                    <button type="submit" class="btn btn-primary btn-lg"><i class="fas fa-save"></i> Simpan Perubahan</button>
+                <div class="text-right">
+                    <button type="submit" class="btn btn-primary btn-lg">Update Laporan</button>
                 </div>
             </div>
         </div>
     </form>
 </div>
 
-<!-- TEMPLATE ROW OPS (HIDDEN) -->
+<!-- Template Ops -->
 <table style="display: none;">
     <tr id="template_ops_row">
-        <td>
-            <select name="ops_kategori[]" class="form-control form-control-sm">
-                <?php foreach ($kategori_ops as $k): ?>
-                    <option value="<?= $k->id_kategori ?>"><?= $k->nama_kategori ?></option>
-                <?php endforeach; ?>
-            </select>
-        </td>
-        <td><input type="text" name="ops_keterangan[]" class="form-control form-control-sm" placeholder="Detail item..."></td>
-        <td><input type="number" name="ops_nominal[]" class="form-control form-control-sm hitung-ops text-right" value="0"></td>
-        <td class="text-center"><button type="button" class="btn btn-danger btn-sm remove-row"><i class="fas fa-trash"></i></button></td>
+        <td><select name="ops_kategori[]" class="form-control form-control-sm"><?php foreach ($kategori_ops as $k): ?><option value="<?= $k->id_kategori ?>"><?= $k->nama_kategori ?></option><?php endforeach; ?></select></td>
+        <td><input type="text" name="ops_keterangan[]" class="form-control form-control-sm"></td>
+        <td><input type="text" name="ops_nominal[]" class="form-control form-control-sm hitung-ops text-right rupiah-input" value="0"></td>
+        <td class="text-center"><button type="button" class="btn btn-danger btn-sm remove-row">x</button></td>
     </tr>
 </table>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
+    function formatRupiah(angka, prefix) {
+        if (typeof angka !== 'string') angka = angka.toString();
+        var number_string = angka.replace(/[^,\d]/g, '').toString(),
+            split = number_string.split(','),
+            sisa = split[0].length % 3,
+            rupiah = split[0].substr(0, sisa),
+            ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+        if (ribuan) {
+            separator = sisa ? '.' : '';
+            rupiah += separator + ribuan.join('.');
+        }
+        rupiah = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
+        return prefix == undefined ? rupiah : (rupiah ? 'Rp. ' + rupiah : '');
+    }
+
+    function cleanRupiah(str) {
+        if (!str) return 0;
+        return parseFloat(str.toString().replace(/\./g, '').replace(/,/g, '.')) || 0;
+    }
+
     $(document).ready(function() {
 
-        // --- LOGIKA HITUNG PEMASUKAN ---
+        // 1. Initial Format on Load
+        $('.rupiah-input').each(function() {
+            $(this).val(formatRupiah($(this).val()));
+        });
+
+        // 2. Trigger Perhitungan Awal (Sangat Penting untuk Edit)
+        // Urutan: Income -> SDM -> Ops -> Fee & Profit
+        calculateIncome();
+        calculateTotalSDM();
+        calculateOps();
+        // Panggil ulang fees untuk memastikan sinkronisasi akhir
+        calculateFees();
+
+        // 3. Event Listeners Agresif (keyup, input, change)
+        $(document).on('keyup input change', '.hitung-income', function() {
+            calculateIncome();
+        });
+
+        $(document).on('keyup input change', '.hitung-sdm', function() {
+            calculateSDMRow($(this));
+        });
+
+        $(document).on('keyup input change', '.hitung-ops', function() {
+            calculateOps();
+        });
+
+        $(document).on('keyup input change', '.hitung-laba', function() {
+            calculateFees();
+        });
+
+        // Untuk format rupiah saat ngetik (hanya keyup agar kursor nyaman)
+        $(document).on('keyup', '.rupiah-input', function() {
+            $(this).val(formatRupiah($(this).val()));
+        });
+
+        $('.hitung-income-trigger').change(function() {
+            $('#box_it').toggle($('#check_it').is(':checked'));
+            $('#box_log').toggle($('#check_log').is(':checked'));
+            $('#box_lain').toggle($('#check_lain').is(':checked'));
+            calculateIncome();
+        });
+
+        // Toggle Jenis IT
         $('#jenis_pemasukan').change(function() {
             if ($(this).val() == 'detail') {
-                $('#input_detail').show();
-                $('#total_pemasukan').prop('readonly', true);
-                calculateIncomeDetail();
+                $('#input_detail_it').css('display', 'flex');
+                $('#subtotal_it').prop('readonly', true);
             } else {
-                $('#input_detail').hide();
-                $('#total_pemasukan').prop('readonly', false).val(0);
+                $('#input_detail_it').hide();
+                $('#subtotal_it').prop('readonly', false).val(0);
             }
-            calculateAll();
+            calculateIncome();
         });
 
-        $('.hitung-income').on('input', function() {
-            calculateIncomeDetail();
-            calculateAll();
+        // Toggle Jenis Logistik
+        $('#jenis_logistik').change(function() {
+            if ($(this).val() == 'detail') {
+                $('#input_detail_log').css('display', 'flex');
+                $('#subtotal_log').prop('readonly', true);
+            } else {
+                $('#input_detail_log').hide();
+                $('#subtotal_log').prop('readonly', false).val(0);
+            }
+            calculateIncome();
         });
 
-        function calculateIncomeDetail() {
-            let set = parseFloat($('#harga_set').val()) || 0;
-            let glg = parseFloat($('#jml_gelanggang').val()) || 0;
-            let hari = parseFloat($('#jml_hari').val()) || 0;
-            $('#total_pemasukan').val(set * glg * hari);
+        function calculateIncome() {
+            let valIT = 0;
+            if ($('#check_it').is(':checked')) {
+                if ($('#jenis_pemasukan').val() == 'detail') {
+                    let h = cleanRupiah($('#harga_set').val());
+                    let g = parseFloat($('#jml_gelanggang').val()) || 0;
+                    let d = parseFloat($('#jml_hari').val()) || 0;
+                    valIT = h * g * d;
+                    $('#subtotal_it').val(formatRupiah(valIT));
+                } else {
+                    valIT = cleanRupiah($('#subtotal_it').val());
+                }
+            } else {
+                // Jika tidak dicentang, anggap 0 tapi jangan ubah field input user
+                valIT = 0;
+            }
+
+            let valLog = 0;
+            if ($('#check_log').is(':checked')) {
+                if ($('#jenis_logistik').val() == 'detail') {
+                    let lh = cleanRupiah($('#log_harga').val());
+                    let lq = parseFloat($('#log_qty').val()) || 0;
+                    let ld = parseFloat($('#log_hari').val()) || 0;
+                    valLog = lh * lq * ld;
+                    $('#subtotal_log').val(formatRupiah(valLog));
+                } else {
+                    valLog = cleanRupiah($('#subtotal_log').val());
+                }
+            } else {
+                valLog = 0;
+            }
+
+            let valLain = 0;
+            if ($('#check_lain').is(':checked')) {
+                valLain = cleanRupiah($('#lain_nominal').val());
+            }
+
+            let total = valIT + valLog + valLain;
+            $('#text_total_pemasukan').text('Rp ' + formatRupiah(total));
+            $('#total_pemasukan_final').val(total);
+
+            calculateFees();
         }
 
-        // --- LOGIKA HITUNG SDM ---
-        $(document).on('input', '.hitung-sdm', function() {
-            let row = $(this).closest('tr');
-            let honor = parseFloat(row.find('input[name="sdm_honor[]"]').val()) || 0;
+        function calculateSDMRow(el) {
+            let row = el.closest('tr');
+            let honor = cleanRupiah(row.find('input[name="sdm_honor[]"]').val());
             let hari = parseFloat(row.find('input[name="sdm_hari[]"]').val()) || 0;
-            let set = parseFloat(row.find('input[name="sdm_setting[]"]').val()) || 0;
-            let trans = parseFloat(row.find('input[name="sdm_transport[]"]').val()) || 0;
-            let bonus = parseFloat(row.find('input[name="sdm_bonus[]"]').val()) || 0;
-            let data = parseFloat(row.find('input[name="sdm_data[]"]').val()) || 0;
-            let pot = parseFloat(row.find('input[name="sdm_potongan[]"]').val()) || 0;
-
+            let set = cleanRupiah(row.find('input[name="sdm_setting[]"]').val());
+            let trans = cleanRupiah(row.find('input[name="sdm_transport[]"]').val());
+            let bonus = cleanRupiah(row.find('input[name="sdm_bonus[]"]').val());
+            let data = cleanRupiah(row.find('input[name="sdm_data[]"]').val());
+            let pot = cleanRupiah(row.find('input[name="sdm_potongan[]"]').val());
             let total = (honor * hari) + set + trans + bonus + data - pot;
-            row.find('input[name="sdm_total[]"]').val(total);
-
+            row.find('input[name="sdm_total[]"]').val(formatRupiah(total));
             calculateTotalSDM();
-            calculateAll();
-        });
+        }
 
         function calculateTotalSDM() {
-            let total = 0;
+            let totalAll = 0;
             $('input[name="sdm_total[]"]').each(function() {
-                total += parseFloat($(this).val()) || 0;
+                totalAll += cleanRupiah($(this).val());
             });
-            $('#total_biaya_sdm_disp').val('Rp ' + new Intl.NumberFormat('id-ID').format(total));
-            $('#total_biaya_sdm_val').val(total);
+            $('#total_biaya_sdm_disp').val(formatRupiah(totalAll));
+            $('#total_biaya_sdm_val').val(totalAll);
+            calculateNetProfit();
         }
 
-        // --- LOGIKA HITUNG OPS ---
         window.addOpsRow = function() {
-            let row = $('#template_ops_row').clone().removeAttr('id');
-            $('#body_ops').append(row);
+            $('#body_ops').append($('#template_ops_row').clone().removeAttr('id'));
         }
-
         $(document).on('click', '.remove-row', function() {
             $(this).closest('tr').remove();
-            calculateTotalOps();
-            calculateAll();
+            calculateOps();
         });
 
-        $(document).on('input', '.hitung-ops', function() {
-            calculateTotalOps();
-            calculateAll();
-        });
-
-        function calculateTotalOps() {
+        function calculateOps() {
             let total = 0;
             $('input[name="ops_nominal[]"]').each(function() {
-                total += parseFloat($(this).val()) || 0;
+                total += cleanRupiah($(this).val());
             });
-            $('#total_biaya_ops_disp').val('Rp ' + new Intl.NumberFormat('id-ID').format(total));
+            $('#total_biaya_ops_disp').val(formatRupiah(total));
             $('#total_biaya_ops_val').val(total);
+            calculateNetProfit();
         }
 
-        // --- LOGIKA HITUNG LABA & BAGI HASIL ---
-        $('#fee_intern_check').change(function() {
-            $('#fee_intern_val').prop('disabled', !this.checked).val(this.checked ? '' : 0);
-            calculateAll();
-        });
-        $('#fee_ekstern_check').change(function() {
-            $('#fee_ekstern_val').prop('disabled', !this.checked).val(this.checked ? '' : 0);
-            calculateAll();
-        });
-        $('.hitung-laba').on('input', function() {
-            calculateAll();
-        });
-        $('#total_pemasukan').on('input', function() {
-            calculateAll();
+        $('#fee_intern_check, #fee_ekstern_check').change(function() {
+            calculateFees();
         });
 
-        function calculateAll() {
-            let pemasukan = parseFloat($('#total_pemasukan').val()) || 0;
+        function calculateFees() {
+            let totalIncome = parseFloat($('#total_pemasukan_final').val()) || 0;
+
+            // Fee selalu dihitung ulang 5% dari total income saat ini
+            if ($('#fee_intern_check').is(':checked')) {
+                $('#fee_intern_val').val(formatRupiah(Math.floor(totalIncome * 0.05)));
+            } else {
+                $('#fee_intern_val').val(0);
+            }
+            if ($('#fee_ekstern_check').is(':checked')) {
+                $('#fee_ekstern_val').val(formatRupiah(Math.floor(totalIncome * 0.05)));
+            } else {
+                $('#fee_ekstern_val').val(0);
+            }
+            calculateNetProfit();
+        }
+
+        $('.hitung-share-trigger').change(function() {
+            calculateNetProfit();
+        });
+
+        function calculateNetProfit() {
+            let pemasukan = parseFloat($('#total_pemasukan_final').val()) || 0;
             let sdm = parseFloat($('#total_biaya_sdm_val').val()) || 0;
             let ops = parseFloat($('#total_biaya_ops_val').val()) || 0;
-            let fee_in = parseFloat($('#fee_intern_val').val()) || 0;
-            let fee_out = parseFloat($('#fee_ekstern_val').val()) || 0;
-
+            let fee_in = cleanRupiah($('#fee_intern_val').val());
+            let fee_out = cleanRupiah($('#fee_ekstern_val').val());
             let laba = pemasukan - sdm - ops - fee_in - fee_out;
 
-            $('#laba_bersih_disp').val('Rp ' + new Intl.NumberFormat('id-ID').format(laba));
+            $('#laba_bersih_disp').val(formatRupiah(laba));
             $('#laba_bersih_val').val(laba);
 
-            // Bagi Hasil (Bulatkan ke bawah agar aman)
-            if (laba > 0) {
-                let share = Math.floor(laba / 3);
-                $('#share_kas').val(share);
-                $('#share_angsuran').val(share);
-                $('#share_royalti').val(laba - (share * 2)); // Sisa masuk royalti
-            } else {
-                $('#share_kas').val(0);
-                $('#share_angsuran').val(0);
-                $('#share_royalti').val(0);
+            let shareKas = $('#share_kas_check').is(':checked');
+            let shareAng = $('#share_angsuran_check').is(':checked');
+            let shareRoy = $('#share_royalti_check').is(':checked');
+            let activeCount = (shareKas ? 1 : 0) + (shareAng ? 1 : 0) + (shareRoy ? 1 : 0);
+
+            $('#share_kas_val').val(0);
+            $('#share_angsuran_val').val(0);
+            $('#share_royalti_val').val(0);
+
+            if (laba > 0 && activeCount > 0) {
+                let shareAmount = Math.floor(laba / activeCount);
+                let sisa = laba - (shareAmount * activeCount);
+                if (shareKas) $('#share_kas_val').val(formatRupiah(shareAmount));
+                if (shareAng) $('#share_angsuran_val').val(formatRupiah(shareAmount));
+                if (shareRoy) $('#share_royalti_val').val(formatRupiah(shareAmount + sisa));
             }
         }
+
+        $('#formLaporan').submit(function() {
+            $('.rupiah-input').each(function() {
+                $(this).val(cleanRupiah($(this).val()));
+            });
+            return true;
+        });
     });
 </script>

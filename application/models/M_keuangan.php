@@ -42,7 +42,7 @@ class M_keuangan extends CI_Model
         return $this->db->get()->result();
     }
 
-    // Simpan Transaksi Lengkap + Logika Auto Kas & Potong Kasbon
+    // Simpan Transaksi Lengkap + Logika Auto Kas (Updated: Gross Flow)
     public function simpan_transaksi_full($data_header, $data_ops, $data_gaji)
     {
         $this->db->trans_start();
@@ -51,49 +51,47 @@ class M_keuangan extends CI_Model
         $this->db->insert('tb_keuangan_event', $data_header);
         $id_keuangan = $this->db->insert_id();
 
-        // [AUTO KAS] 1. Pemasukan Kas PT
-        if (isset($data_header['kas_pt_nominal']) && $data_header['kas_pt_nominal'] > 0) {
+        // Ambil Nama Event
+        $info_event = $this->db->get_where('tb_peminjaman', ['id_peminjaman' => $data_header['id_peminjaman']])->row();
+        $nama_event = $info_event ? $info_event->nama_event : 'Event ID ' . $data_header['id_peminjaman'];
+
+        // 2. AUTO KAS - ARUS KAS REAL (Pemasukan & Pengeluaran Event)
+        // Menggantikan logika lama yang hanya mencatat Profit/Bagi Hasil
+
+        // A. Catat TOTAL PEMASUKAN EVENT (Uang Masuk)
+        if ($data_header['total_pemasukan'] > 0) {
             $this->db->insert('tb_kas_umum', [
                 'tanggal'       => date('Y-m-d'),
                 'jenis'         => 'masuk',
-                'kategori'      => 'Bagi Hasil Event (Kas PT)',
-                'nominal'       => $data_header['kas_pt_nominal'],
-                'keterangan'    => 'Profit Share Event ID: ' . $data_header['id_peminjaman'],
+                'kategori'      => 'Pemasukan Event',
+                'nominal'       => $data_header['total_pemasukan'],
+                'keterangan'    => 'Total Income: ' . $nama_event,
                 'sumber_auto'   => 'event',
                 'ref_id'        => $id_keuangan,
                 'created_by'    => $this->session->userdata('id_user')
             ]);
         }
 
-        // [AUTO KAS] 2. Pemasukan Dana Angsuran
-        if (isset($data_header['angsuran_nominal']) && $data_header['angsuran_nominal'] > 0) {
+        // B. Catat TOTAL PENGELUARAN EVENT (Uang Keluar)
+        // Hitung total belanja (SDM + Ops + Fee Marketing)
+        $total_keluar_event = $data_header['total_biaya_sdm'] + $data_header['total_biaya_ops'];
+        if (isset($data_header['fee_intern_nominal'])) $total_keluar_event += $data_header['fee_intern_nominal'];
+        if (isset($data_header['fee_ekstern_nominal'])) $total_keluar_event += $data_header['fee_ekstern_nominal'];
+
+        if ($total_keluar_event > 0) {
             $this->db->insert('tb_kas_umum', [
                 'tanggal'       => date('Y-m-d'),
-                'jenis'         => 'masuk',
-                'kategori'      => 'Simpanan Dana Angsuran',
-                'nominal'       => $data_header['angsuran_nominal'],
-                'keterangan'    => 'Alokasi Angsuran Event ID: ' . $data_header['id_peminjaman'],
+                'jenis'         => 'keluar',
+                'kategori'      => 'Pengeluaran Event',
+                'nominal'       => $total_keluar_event,
+                'keterangan'    => 'Total Expense (SDM+Ops): ' . $nama_event,
                 'sumber_auto'   => 'event',
                 'ref_id'        => $id_keuangan,
                 'created_by'    => $this->session->userdata('id_user')
             ]);
         }
 
-        // [AUTO KAS] 3. Pemasukan Dana Royalti
-        if (isset($data_header['royalti_nominal']) && $data_header['royalti_nominal'] > 0) {
-            $this->db->insert('tb_kas_umum', [
-                'tanggal'       => date('Y-m-d'),
-                'jenis'         => 'masuk',
-                'kategori'      => 'Simpanan Dana Royalti',
-                'nominal'       => $data_header['royalti_nominal'],
-                'keterangan'    => 'Alokasi Royalti Event ID: ' . $data_header['id_peminjaman'],
-                'sumber_auto'   => 'event',
-                'ref_id'        => $id_keuangan,
-                'created_by'    => $this->session->userdata('id_user')
-            ]);
-        }
-
-        // 2. Simpan Biaya Operasional
+        // 3. Simpan Biaya Operasional (Detail)
         if (!empty($data_ops)) {
             $batch_ops = [];
             foreach ($data_ops as $ops) {
@@ -105,15 +103,16 @@ class M_keuangan extends CI_Model
             }
         }
 
-        // 3. Simpan Gaji SDM & Proses Potongan Kasbon
+        // 4. Simpan Gaji SDM & Proses Potongan Kasbon
         if (!empty($data_gaji)) {
             $batch_gaji = [];
             foreach ($data_gaji as $gaji) {
                 $gaji['id_keuangan'] = $id_keuangan;
 
-                // --- LOGIKA POTONG KASBON ---
+                // LOGIKA POTONG KASBON (DIPERBAIKI AGAR BALANCE)
                 if (isset($gaji['nominal_potongan']) && $gaji['nominal_potongan'] > 0) {
                     $sisa_potongan = $gaji['nominal_potongan'];
+                    $total_terbayar = 0;
                     $id_user = $gaji['id_user'];
 
                     $this->db->where('id_user', $id_user);
@@ -125,14 +124,13 @@ class M_keuangan extends CI_Model
                         if ($sisa_potongan <= 0) break;
                         $bayar = ($sisa_potongan >= $k->sisa_tagihan) ? $k->sisa_tagihan : $sisa_potongan;
 
-                        // Catat History Pembayaran (Potong Gaji)
                         $data_bayar = [
                             'id_kasbon'     => $k->id_kasbon,
                             'tanggal_bayar' => date('Y-m-d'),
                             'nominal_bayar' => $bayar,
                             'metode'        => 'potong_gaji',
                             'id_keuangan'   => $id_keuangan,
-                            'keterangan'    => 'Potong Gaji Event: ' . $data_header['id_peminjaman']
+                            'keterangan'    => 'Potong Gaji Event: ' . $nama_event
                         ];
                         $this->db->insert('tb_kasbon_bayar', $data_bayar);
 
@@ -146,6 +144,23 @@ class M_keuangan extends CI_Model
                         $this->db->update('tb_kasbon', $update_data);
 
                         $sisa_potongan -= $bayar;
+                        $total_terbayar += $bayar;
+                    }
+
+                    // Masukkan Uang Potongan ke Kas Umum agar Balance
+                    // (Karena Pengeluaran Event mencatat Gaji FULL, maka Potongan harus masuk lagi sebagai Pemasukan Pelunasan)
+                    if ($total_terbayar > 0) {
+                        $user_info = $this->db->get_where('tb_users', ['id_user' => $id_user])->row();
+                        $this->db->insert('tb_kas_umum', [
+                            'tanggal'       => date('Y-m-d'),
+                            'jenis'         => 'masuk',
+                            'kategori'      => 'Pelunasan Kasbon (Potong Gaji)',
+                            'nominal'       => $total_terbayar,
+                            'keterangan'    => 'Potong Gaji a.n ' . ($user_info ? $user_info->nama_lengkap : 'Karyawan') . ' (' . $nama_event . ')',
+                            'sumber_auto'   => 'event',
+                            'ref_id'        => $id_keuangan,
+                            'created_by'    => $this->session->userdata('id_user')
+                        ]);
                     }
                 }
                 $batch_gaji[] = $gaji;
@@ -161,7 +176,7 @@ class M_keuangan extends CI_Model
     }
 
     // ==========================================
-    // 3. EDIT LAPORAN KEUANGAN (UPDATE) - [BARU]
+    // 3. EDIT LAPORAN KEUANGAN (UPDATE)
     // ==========================================
 
     public function update_transaksi_full($id_keuangan, $data_header, $data_ops, $data_gaji)
@@ -169,26 +184,19 @@ class M_keuangan extends CI_Model
         $this->db->trans_start();
 
         // --- STEP 1: REVERT (BATALKAN EFEK LAPORAN LAMA) ---
-
-        // A. Kembalikan Saldo Kasbon Karyawan
         $riwayat_bayar = $this->db->get_where('tb_kasbon_bayar', ['id_keuangan' => $id_keuangan])->result();
         if (!empty($riwayat_bayar)) {
             foreach ($riwayat_bayar as $bayar) {
-                // Kembalikan saldo hutang
                 $this->db->set('sisa_tagihan', 'sisa_tagihan + ' . $bayar->nominal_bayar, FALSE);
-                $this->db->set('status', 'active'); // Aktifkan lagi hutangnya
+                $this->db->set('status', 'active');
                 $this->db->where('id_kasbon', $bayar->id_kasbon);
                 $this->db->update('tb_kasbon');
-
-                // Hapus history bayar lama
                 $this->db->delete('tb_kasbon_bayar', ['id_bayar' => $bayar->id_bayar]);
             }
         }
 
-        // B. Hapus Auto Kas Lama (Kas PT, Angsuran, Royalti)
+        // Hapus Data Kas Lama (Pemasukan Event, Pengeluaran Event, Potongan Gaji)
         $this->db->delete('tb_kas_umum', ['sumber_auto' => 'event', 'ref_id' => $id_keuangan]);
-
-        // C. Hapus Detail Lama
         $this->db->delete('tb_pengeluaran_ops', ['id_keuangan' => $id_keuangan]);
         $this->db->delete('tb_pengeluaran_sdm', ['id_keuangan' => $id_keuangan]);
 
@@ -199,38 +207,37 @@ class M_keuangan extends CI_Model
         $this->db->where('id_keuangan', $id_keuangan);
         $this->db->update('tb_keuangan_event', $data_header);
 
-        // B. Insert Auto Kas Baru
-        if (isset($data_header['kas_pt_nominal']) && $data_header['kas_pt_nominal'] > 0) {
+        $info_event = $this->db->get_where('tb_peminjaman', ['id_peminjaman' => $data_header['id_peminjaman']])->row();
+        $nama_event = $info_event ? $info_event->nama_event : 'Event ID ' . $data_header['id_peminjaman'];
+
+        // B. AUTO KAS - ARUS KAS REAL (Updated)
+
+        // 1. Catat Total Pemasukan
+        if ($data_header['total_pemasukan'] > 0) {
             $this->db->insert('tb_kas_umum', [
                 'tanggal' => date('Y-m-d'),
                 'jenis' => 'masuk',
-                'kategori' => 'Bagi Hasil Event (Kas PT)',
-                'nominal' => $data_header['kas_pt_nominal'],
-                'keterangan' => 'Profit Share Event ID: ' . $data_header['id_peminjaman'],
+                'kategori' => 'Pemasukan Event',
+                'nominal' => $data_header['total_pemasukan'],
+                'keterangan' => 'Total Income: ' . $nama_event,
                 'sumber_auto' => 'event',
                 'ref_id' => $id_keuangan,
                 'created_by' => $this->session->userdata('id_user')
             ]);
         }
-        if (isset($data_header['angsuran_nominal']) && $data_header['angsuran_nominal'] > 0) {
+
+        // 2. Catat Total Pengeluaran
+        $total_keluar_event = $data_header['total_biaya_sdm'] + $data_header['total_biaya_ops'];
+        if (isset($data_header['fee_intern_nominal'])) $total_keluar_event += $data_header['fee_intern_nominal'];
+        if (isset($data_header['fee_ekstern_nominal'])) $total_keluar_event += $data_header['fee_ekstern_nominal'];
+
+        if ($total_keluar_event > 0) {
             $this->db->insert('tb_kas_umum', [
                 'tanggal' => date('Y-m-d'),
-                'jenis' => 'masuk',
-                'kategori' => 'Simpanan Dana Angsuran',
-                'nominal' => $data_header['angsuran_nominal'],
-                'keterangan' => 'Alokasi Angsuran Event ID: ' . $data_header['id_peminjaman'],
-                'sumber_auto' => 'event',
-                'ref_id' => $id_keuangan,
-                'created_by' => $this->session->userdata('id_user')
-            ]);
-        }
-        if (isset($data_header['royalti_nominal']) && $data_header['royalti_nominal'] > 0) {
-            $this->db->insert('tb_kas_umum', [
-                'tanggal' => date('Y-m-d'),
-                'jenis' => 'masuk',
-                'kategori' => 'Simpanan Dana Royalti',
-                'nominal' => $data_header['royalti_nominal'],
-                'keterangan' => 'Alokasi Royalti Event ID: ' . $data_header['id_peminjaman'],
+                'jenis' => 'keluar',
+                'kategori' => 'Pengeluaran Event',
+                'nominal' => $total_keluar_event,
+                'keterangan' => 'Total Expense (SDM+Ops): ' . $nama_event,
                 'sumber_auto' => 'event',
                 'ref_id' => $id_keuangan,
                 'created_by' => $this->session->userdata('id_user')
@@ -253,9 +260,10 @@ class M_keuangan extends CI_Model
             foreach ($data_gaji as $gaji) {
                 $gaji['id_keuangan'] = $id_keuangan;
 
-                // Logika Potong Kasbon (Sama seperti insert baru)
+                // LOGIKA POTONG KASBON
                 if (isset($gaji['nominal_potongan']) && $gaji['nominal_potongan'] > 0) {
                     $sisa_potongan = $gaji['nominal_potongan'];
+                    $total_terbayar = 0;
                     $id_user = $gaji['id_user'];
 
                     $this->db->where('id_user', $id_user);
@@ -273,7 +281,7 @@ class M_keuangan extends CI_Model
                             'nominal_bayar' => $bayar,
                             'metode' => 'potong_gaji',
                             'id_keuangan' => $id_keuangan,
-                            'keterangan' => 'Potong Gaji Event: ' . $data_header['id_peminjaman']
+                            'keterangan' => 'Potong Gaji Event: ' . $nama_event
                         ];
                         $this->db->insert('tb_kasbon_bayar', $data_bayar);
 
@@ -283,7 +291,23 @@ class M_keuangan extends CI_Model
 
                         $this->db->where('id_kasbon', $k->id_kasbon);
                         $this->db->update('tb_kasbon', $update_data);
+
                         $sisa_potongan -= $bayar;
+                        $total_terbayar += $bayar;
+                    }
+
+                    if ($total_terbayar > 0) {
+                        $user_info = $this->db->get_where('tb_users', ['id_user' => $id_user])->row();
+                        $this->db->insert('tb_kas_umum', [
+                            'tanggal'       => date('Y-m-d'),
+                            'jenis'         => 'masuk',
+                            'kategori'      => 'Pelunasan Kasbon (Potong Gaji)',
+                            'nominal'       => $total_terbayar,
+                            'keterangan'    => 'Potong Gaji a.n ' . ($user_info ? $user_info->nama_lengkap : 'Karyawan') . ' (' . $nama_event . ')',
+                            'sumber_auto'   => 'event',
+                            'ref_id'        => $id_keuangan,
+                            'created_by'    => $this->session->userdata('id_user')
+                        ]);
                     }
                 }
                 $batch_gaji[] = $gaji;
@@ -617,6 +641,7 @@ class M_keuangan extends CI_Model
         $data['saldo_real'] = $this->get_saldo_akhir();
 
         // 2. DATA ALOKASI PROFIT (Akumulasi dari Tabel Event)
+        // [PENTING] Data ini tetap diambil dari tb_keuangan_event meskipun tb_kas_umumnya sudah berubah
         $this->db->select_sum('kas_pt_nominal', 'total_kas_pt');
         $this->db->select_sum('angsuran_nominal', 'total_angsuran_alloc');
         $this->db->select_sum('royalti_nominal', 'total_royalti_alloc');
@@ -637,7 +662,7 @@ class M_keuangan extends CI_Model
 
         $data['saldo_angsuran_now'] = $data['total_angsuran_alloc'] - $total_bayar_angsuran;
 
-        // 4. HITUNG POS ROYALTI (Saldo Virtual) - [BARU]
+        // 4. HITUNG POS ROYALTI (Saldo Virtual)
         $this->db->select_sum('nominal');
         $this->db->where('jenis', 'keluar');
         $this->db->like('kategori', 'Pembayaran Royalti');

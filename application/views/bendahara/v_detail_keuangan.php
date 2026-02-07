@@ -2,7 +2,7 @@
     <div class="d-sm-flex align-items-center justify-content-between mb-4 d-print-none">
         <h1 class="h3 mb-0 text-gray-800" style="font-weight: 700;">Detail Laporan Keuangan</h1>
         <div>
-            <!-- [UPDATE] Tombol Download PDF via html2pdf -->
+            <!-- Tombol Download PDF via html2pdf -->
             <button onclick="generatePDF()" class="btn btn-sm btn-primary shadow-sm mr-2">
                 <i class="fas fa-file-pdf mr-1"></i> Download Laporan (PDF)
             </button>
@@ -23,7 +23,8 @@
                 <!-- KOP LAPORAN -->
                 <div class="row border-bottom pb-3 mb-4 align-items-center" style="border-bottom: 3px double #000 !important;">
                     <div class="col-2 text-center">
-                        <img src="<?= base_url('assets/logo/logo.png') ?>" alt="Logo" style="max-height: 80px;">
+                        <!-- Pastikan path logo sesuai -->
+                        <img src="<?= base_url('assets/logo/logo.png') ?>" alt="Logo" style="max-height: 80px;" onerror="this.style.display='none'">
                     </div>
                     <div class="col-10 text-left">
                         <h3 class="font-weight-bold text-dark mb-0" style="font-family: Arial, sans-serif; font-size: 24px;">DIGITAL PENCAK SILAT</h3>
@@ -38,7 +39,6 @@
                         <td width="15%" class="font-weight-bold">Nama Event</td>
                         <td width="35%">: <?= $header->nama_event ?></td>
                         <td width="15%" class="font-weight-bold">Tanggal Event</td>
-                        <!-- [UPDATE] Menggunakan tgl_kembali_rencana -->
                         <td width="35%">: <?= date('d M Y', strtotime($header->tgl_pinjam)) ?> s/d <?= date('d M Y', strtotime($header->tgl_kembali_rencana)) ?></td>
                     </tr>
                     <tr>
@@ -55,7 +55,7 @@
                     </tr>
                 </table>
 
-                <!-- 1. PEMASUKAN -->
+                <!-- 1. PEMASUKAN (Updated Logic: IT, Logistik, Lainnya) -->
                 <div class="mb-4">
                     <h5 class="font-weight-bold text-uppercase border-bottom border-dark pb-2 mb-3">I. Pemasukan (Income)</h5>
                     <table class="table table-bordered mb-0" style="border: 1px solid #000;">
@@ -66,18 +66,66 @@
                             </tr>
                         </thead>
                         <tbody>
+                            <!-- A. IT / GELANGGANG -->
+                            <?php if ($header->income_it_active): ?>
+                                <tr>
+                                    <td style="border: 1px solid #000;">
+                                        <b>Pemasukan IT (Gelanggang)</b>
+                                        <?php if ($header->jenis_pemasukan == 'detail'): ?>
+                                            <br><small class="text-muted">Rincian: <?= number_format($header->harga_set, 0, ',', '.') ?> (Set) x <?= $header->jml_gelanggang ?> (Glg) x <?= $header->jml_hari ?> (Hari)</small>
+                                        <?php else: ?>
+                                            <br><small class="text-muted">Metode: Borongan / Global</small>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td style="border: 1px solid #000;" class="text-right">
+                                        <?php
+                                        $sub_it = ($header->jenis_pemasukan == 'detail')
+                                            ? ($header->harga_set * $header->jml_gelanggang * $header->jml_hari)
+                                            : ($header->total_pemasukan - $header->log_total - $header->lain_nominal);
+                                        echo number_format($sub_it, 0, ',', '.');
+                                        ?>
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
+
+                            <!-- B. LOGISTIK -->
+                            <?php if ($header->income_log_active): ?>
+                                <tr>
+                                    <td style="border: 1px solid #000;">
+                                        <b>Pemasukan Logistik</b>
+                                        <?php if ($header->log_harga > 0 || $header->log_qty > 0): ?>
+                                            <br><small class="text-muted">Rincian: <?= number_format($header->log_harga, 0, ',', '.') ?> x <?= $header->log_qty ?> Pkt x <?= $header->log_hari ?> Hari</small>
+                                        <?php else: ?>
+                                            <br><small class="text-muted">Metode: Borongan / Global</small>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td style="border: 1px solid #000;" class="text-right">
+                                        <?= number_format($header->log_total, 0, ',', '.') ?>
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
+
+                            <!-- C. LAINNYA -->
+                            <?php if ($header->income_lain_active): ?>
+                                <tr>
+                                    <td style="border: 1px solid #000;">
+                                        <b>Pemasukan Lainnya</b><br>
+                                        <small class="text-muted"><?= $header->lain_keterangan ?></small>
+                                    </td>
+                                    <td style="border: 1px solid #000;" class="text-right">
+                                        <?= number_format($header->lain_nominal, 0, ',', '.') ?>
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                        <tfoot style="background-color: #f0f0f0;">
                             <tr>
-                                <td style="border: 1px solid #000;">
-                                    Total Pemasukan Event (<?= ucfirst($header->jenis_pemasukan) ?>)
-                                    <?php if ($header->jenis_pemasukan == 'detail'): ?>
-                                        <br><small class="text-muted">Rincian: <?= $header->harga_set ?> (Set) x <?= $header->jml_gelanggang ?> (Glg) x <?= $header->jml_hari ?> (Hari)</small>
-                                    <?php endif; ?>
-                                </td>
-                                <td style="border: 1px solid #000;" class="text-right font-weight-bold">
-                                    <?= number_format($header->total_pemasukan, 0, ',', '.') ?>
+                                <td class="text-right font-weight-bold" style="border: 1px solid #000;">TOTAL PEMASUKAN</td>
+                                <td class="text-right font-weight-bold" style="border: 1px solid #000;">
+                                    Rp <?= number_format($header->total_pemasukan, 0, ',', '.') ?>
                                 </td>
                             </tr>
-                        </tbody>
+                        </tfoot>
                     </table>
                 </div>
 
@@ -222,15 +270,21 @@
                                 </tr>
                                 <tr>
                                     <td style="border: 1px solid #000;">Kas PT</td>
-                                    <td class="text-right font-weight-bold" style="border: 1px solid #000;"><?= number_format($header->kas_pt_nominal, 0, ',', '.') ?></td>
+                                    <td class="text-right font-weight-bold" style="border: 1px solid #000;">
+                                        <?= $header->share_kas_active ? number_format($header->kas_pt_nominal, 0, ',', '.') : '-' ?>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td style="border: 1px solid #000;">Angsuran</td>
-                                    <td class="text-right font-weight-bold" style="border: 1px solid #000;"><?= number_format($header->angsuran_nominal, 0, ',', '.') ?></td>
+                                    <td class="text-right font-weight-bold" style="border: 1px solid #000;">
+                                        <?= $header->share_angsuran_active ? number_format($header->angsuran_nominal, 0, ',', '.') : '-' ?>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td style="border: 1px solid #000;">Royalti</td>
-                                    <td class="text-right font-weight-bold" style="border: 1px solid #000;"><?= number_format($header->royalti_nominal, 0, ',', '.') ?></td>
+                                    <td class="text-right font-weight-bold" style="border: 1px solid #000;">
+                                        <?= $header->share_royalti_active ? number_format($header->royalti_nominal, 0, ',', '.') : '-' ?>
+                                    </td>
                                 </tr>
                             </table>
                         <?php endif; ?>
@@ -268,8 +322,8 @@
 <script>
     function generatePDF() {
         const element = document.getElementById('print-area');
-        // [UPDATE] Nama file menggunakan nama event
-        const filename = 'Laporan_Keuangan_<?= $header->nama_event ?>.pdf';
+        // Nama file menggunakan nama event
+        const filename = 'Laporan_Keuangan_<?= str_replace(' ', '_', $header->nama_event) ?>.pdf';
 
         const opt = {
             margin: 10,
@@ -282,7 +336,7 @@
                 scale: 2,
                 useCORS: true
             },
-            // [UPDATE] Orientasi Landscape
+            // Orientasi Landscape
             jsPDF: {
                 unit: 'mm',
                 format: 'a4',
